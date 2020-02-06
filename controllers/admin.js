@@ -1,4 +1,6 @@
-const { validationResult } = require('express-validator');
+const {
+  validationResult
+} = require('express-validator');
 const mongoose = require('mongoose');
 
 const Product = require("../models/product");
@@ -20,8 +22,8 @@ exports.postAddProducts = (req, res, next) => {
   const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
-  
-  
+
+
   if (!image) {
     return res.status(422).render('admin/edit-product', {
       path: '/add-product',
@@ -86,7 +88,7 @@ exports.getEditProduct = (req, res, next) => {
     return res.redirect('/');
   }
   const prodId = req.params.productId;
-  
+
   Product.findById(prodId)
     .then(product => {
       if (!product) {
@@ -160,29 +162,11 @@ exports.postEditProduct = (req, res, next) => {
     });
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-  const prodId = req.body.productId;
-  Product.findById(prodId)
-    .then(prod => {
-      if (!prod) {
-        throw new Error('Product Not Found For Deletion');
-      }
-      fileHelper.deleteFile(prod.imageUrl);
-      return Product.deleteOne({ _id : prodId, userId: req.user._id });
-    })
-    .then(() => {
-      console.log('DESTROYED PRODUCT');
-      res.redirect("/admin/products");
-    })
-    .catch(err => {
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
-}
 
 exports.getProducts = (req, res, next) => {
-  Product.find({ userId: req.user._id })
+  Product.find({
+      userId: req.user._id
+    })
     // .select('title price -_id')
     // .populate('userId', 'name email')
     .then(products => {
@@ -190,7 +174,7 @@ exports.getProducts = (req, res, next) => {
         prods: products,
         pageTitle: 'Admin | Products List',
         path: '/admin/products',
-        
+
       });
     })
     .catch(err => {
@@ -199,3 +183,25 @@ exports.getProducts = (req, res, next) => {
       return next(error);
     });
 };
+
+exports.deleteProduct = (req, res, next) => {
+  const prodId = req.params.productId;
+  Product.findById(prodId)
+    .then(prod => {
+      if (!prod) {
+        throw new Error('Product Not Found For Deletion');
+      }
+      fileHelper.deleteFile(prod.imageUrl);
+      return Product.deleteOne({
+        _id: prodId,
+        userId: req.user._id
+      });
+    })
+    .then(() => {
+      console.log('DESTROYED PRODUCT');
+      res.status(200).json({ message: "Success !" })
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Product Deletion Failed!" });
+    });
+}
